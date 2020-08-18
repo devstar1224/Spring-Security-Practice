@@ -92,5 +92,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .tokenValiditySeconds(3600) //기본은 14일
                 .alwaysRemember(true) //기본값은 false #remember-me 기능이 활성화되지 않아도 항상 실행
                 .userDetailsService(userDetailsService);
+
+        http.sessionManagement()
+                .maximumSessions(1) //한 아이디에 한꺼번에 접속가능한 수 (세션의 수)
+                .maxSessionsPreventsLogin(false); //flase시 이전사용자의 세션 무효화, true시 신규사용자의 세션생성 차단. 기본값은 false.
+
+        http.sessionManagement()
+                .sessionFixation().changeSessionId(); //세션 탈취 방지 로그인시 세션 ID가 변경됨.
     }
 }
