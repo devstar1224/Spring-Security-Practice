@@ -29,6 +29,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+
+        /*
+        * roles에는 여러개의 그룹들이 들어 갈 수 있고 하단에 기술된 roles와 같이 여러개 기술이 가능하다.
+        * */
         auth.inMemoryAuthentication().withUser("user").password("{noop}1111").roles("USER");
         auth.inMemoryAuthentication().withUser("sys").password("{noop}1111").roles("SYS", "USER");
         auth.inMemoryAuthentication().withUser("admin").password("{noop}1111").roles("ADMIN", "SYS", "USER");
@@ -36,12 +40,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+
+        /*
+        * 인가 api 권한 설정중 antPatterns은 상세한 패턴이 상단이 오게 만들어야 함.
+        * ex) /admin/pay 와 /admin/** 이 있을경우 /admin/pay가 /admin/** 보다 상위라인에 기술되어야 함.
+        * */
         http.authorizeRequests()
                 .antMatchers("/user").hasRole("USER")
                 .antMatchers("/admin/pay").hasRole("ADMIN")
                 .antMatchers("/admin/**").access("hasRole('ADMIN') or hasRole('SYS')")
                 .anyRequest()
                 .fullyAuthenticated();
+
+
         http.formLogin() //로그인 관련 설정
                 //.loginPage("/loginPage") //직접 로그인 페이지 설정.
                 .defaultSuccessUrl("/") //로그인이 성공하면 이동할 url
