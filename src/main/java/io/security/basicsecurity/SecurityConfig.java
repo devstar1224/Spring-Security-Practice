@@ -158,5 +158,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         response.sendRedirect("/denied");
                     }
                 });
+
+        /*
+        * csrf 대한부분은 기본적으로 활성화 되어 있음.
+        * 다음과 같이 disable() 메소드로 비활성화 가능함.
+        * csrf 필터는 켜두는것을 보안상 권장함.
+        * 그래서 일단 하단에 주석처리 해둠.
+        * */
+        // http.csrf().disable();
     }
 }
