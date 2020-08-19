@@ -178,7 +178,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 }
 
 @Configuration
-@Order(1)
+@Order(1) //Order가 0번째 부터 받아옴.
 class SercurityConfig2 extends WebSecurityConfigurerAdapter{
 
     @Override
