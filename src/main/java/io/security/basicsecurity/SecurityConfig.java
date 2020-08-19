@@ -2,6 +2,7 @@ package io.security.basicsecurity;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -9,10 +10,15 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -46,6 +52,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         * ex) /admin/pay 와 /admin/** 이 있을경우 /admin/pay가 /admin/** 보다 상위라인에 기술되어야 함.
         * */
         http.authorizeRequests()
+                .antMatchers("/login").permitAll()
                 .antMatchers("/user").hasRole("USER")
                 .antMatchers("/admin/pay").hasRole("ADMIN")
                 .antMatchers("/admin/**").access("hasRole('ADMIN') or hasRole('SYS')")
@@ -55,6 +62,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         http.formLogin() //로그인 관련 설정
                 //.loginPage("/loginPage") //직접 로그인 페이지 설정.
+
+                // 인증, 인가예외 처리 부분
+                .successHandler(new AuthenticationSuccessHandler() {
+                    @Override
+                    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+                        RequestCache requestCache = new HttpSessionRequestCache();
+                        SavedRequest savedRequest = requestCache.getRequest(request, response);
+                        String redirectUrl = savedRequest.getRedirectUrl();
+                        response.sendRedirect(redirectUrl);
+                    }
+                })
+
                 .defaultSuccessUrl("/") //로그인이 성공하면 이동할 url
                 .failureUrl("/login") //실패 했을때. 호출 url
                 .usernameParameter("userId") //아이디 파라미터 설정
@@ -123,5 +142,21 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionFixation().changeSessionId(); //세션 탈취 방지 로그인시 세션 ID가 변경됨.
 
 
+        /*
+        * 인증, 인가예외 처리 핸들러 부분.
+        * */
+        http.exceptionHandling() //예외처리 핸들러
+                .authenticationEntryPoint(new AuthenticationEntryPoint() { // 인증예외시 핸들러
+                    @Override
+                    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+                        response.sendRedirect("/login");
+                    }
+                })
+                .accessDeniedHandler(new AccessDeniedHandler() { //인가예외시 핸들러
+                    @Override
+                    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+                        response.sendRedirect("/denied");
+                    }
+                });
     }
 }
