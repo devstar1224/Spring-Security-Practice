@@ -2,6 +2,7 @@ package io.security.basicsecurity;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -28,6 +29,7 @@ import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity
+@Order(0)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
@@ -51,14 +53,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         * 인가 api 권한 설정중 antPatterns은 상세한 패턴이 상단이 오게 만들어야 함.
         * ex) /admin/pay 와 /admin/** 이 있을경우 /admin/pay가 /admin/** 보다 상위라인에 기술되어야 함.
         * */
-        http.authorizeRequests()
-                .antMatchers("/login").permitAll()
-                .antMatchers("/user").hasRole("USER")
-                .antMatchers("/admin/pay").hasRole("ADMIN")
-                .antMatchers("/admin/**").access("hasRole('ADMIN') or hasRole('SYS')")
-                .anyRequest()
-                .fullyAuthenticated();
+//        http.authorizeRequests()
+//                .antMatchers("/login").permitAll()
+//                .antMatchers("/user").hasRole("USER")
+//                .antMatchers("/admin/pay").hasRole("ADMIN")
+//                .antMatchers("/admin/**").access("hasRole('ADMIN') or hasRole('SYS')")
+//                .anyRequest()
+//                .fullyAuthenticated();
 
+
+        http.antMatcher("/admin/**")
+                .authorizeRequests()
+                .anyRequest().authenticated()
+                .and()
+                .httpBasic();
 
         http.formLogin() //로그인 관련 설정
                 //.loginPage("/loginPage") //직접 로그인 페이지 설정.
@@ -166,5 +174,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         * 그래서 일단 하단에 주석처리 해둠.
         * */
         // http.csrf().disable();
+    }
+}
+
+@Configuration
+@Order(1)
+class SercurityConfig2 extends WebSecurityConfigurerAdapter{
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.authorizeRequests()
+                .anyRequest().permitAll()
+                .and()
+                .formLogin();
     }
 }
